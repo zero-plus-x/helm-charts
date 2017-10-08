@@ -1,0 +1,4 @@
+apiVersion: v1
+description: A Helm chart for serving static websites with nginx
+name: static-website
+version: 0.1.0
