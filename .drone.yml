@@ -1,0 +1,24 @@
+pipeline:
+  build:
+    image: zeroplusx/kube-workspace:latest
+    pull: true
+    commands:
+    - for d in */ ; do (helm lint --strict $d) || exit 1; done || exit 1 # Fail early, before packaging, if linting fails
+    - for d in */ ; do (helm package --save=false $d) || exit 1; done || exit 1
+    - curl -#SLo index_latest.yaml http://charts.0x.se/index.yaml
+    - helm repo index . --merge index_latest.yaml --url http://charts.0x.se
+    - mkdir repo && mv index.yaml repo/ && mv *.tgz repo/
+
+  deploy:
+    image: google/cloud-sdk:alpine
+    pull: true
+    when:
+      event: push
+      branch: master
+    secrets: [ service_account ]
+    commands:
+    - echo $SERVICE_ACCOUNT > gcloud-service-key.json
+    - gcloud auth activate-service-account --key-file gcloud-service-key.json # auth with gcloud
+    - gcloud config set project zero-plus-x
+    - gsutil -m rsync -R repo/ gs://charts.0x.se # deploy changes
+    - gsutil -m setmeta -r -h "Cache-Control:public, max-age=60" gs://charts.0x.se/* # set cache
