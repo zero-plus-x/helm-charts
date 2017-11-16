@@ -1,0 +1,4 @@
+apiVersion: v1
+description: A Helm chart for serving Express.js webapps using Node.js
+name: express-webapp
+version: 0.1.0
