@@ -1,3 +1,4 @@
+{{- $secretName := include "fullname" . -}}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -32,6 +33,13 @@ spec:
         {{- range $key, $val := .Values.envVars }}
         - name: {{ $key }}
           value: {{ $val | quote }}
+        {{- end }}
+        {{- range $key, $val := .Values.secretEnvVars }}
+        - name: {{ $key }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ $secretName }}
+              key: {{ $key }}
         {{- end }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
