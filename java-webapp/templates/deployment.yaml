@@ -1,61 +1,66 @@
-{{- $secretName := include "fullname" . -}}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "fullname" . }}
+  name: {{ template "java-webapp.fullname" . }}
   labels:
-    app: {{ template "fullname" . }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app: {{ template "java-webapp.name" . }}
+    chart: {{ template "java-webapp.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: {{ .Values.replicaCount }}
-  {{- if .Values.deploymentStrategy }}
+  replicas: {{ .Values.replicas }}
+{{- with .Values.updateStrategy }}
   strategy:
-    type: {{ default "RollingUpdate" .Values.deploymentStrategy.type }}
-    {{- if (eq .Values.deploymentStrategy.type "RollingUpdate") }}
-    rollingUpdate:
-      maxUnavailable: {{ default "25%" .Values.deploymentStrategy.rollingUpdate.maxUnavailable }}
-      maxSurge: {{ default "25%" .Values.deploymentStrategy.rollingUpdate.maxSurge }}
-    {{- end }}
-  {{- end }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ template "java-webapp.name" . }}
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ template "fullname" . }}
+        app: {{ template "java-webapp.name" . }}
+        chart: {{ template "java-webapp.chart" . }}
         release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+{{- with .Values.podAnnotations }}
+      annotations:
+{{ toYaml . | indent 8 }}
+{{- end }}
     spec:
       containers:
-      - name: {{ .Chart.Name }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        env:
-        {{- range $key, $val := .Values.envVars }}
-        - name: {{ $key }}
-          value: {{ $val | quote }}
-        {{- end }}
-        {{- range $key, $val := .Values.secretEnvVars }}
-        - name: {{ $key }}
-          valueFrom:
-            secretKeyRef:
-              name: {{ $secretName }}
-              key: {{ $key }}
-        {{- end }}
-        ports:
-        - containerPort: {{ .Values.service.internalPort }}
-        {{- if .Values.healthz }}
-        {{- if .Values.healthz.livenessProbe }}
-        livenessProbe:
-{{ toYaml .Values.healthz.livenessProbe | indent 10 }}
-        {{- end }}
-        {{- if .Values.healthz.readinessProbe }}
-        readinessProbe:
-{{ toYaml .Values.healthz.readinessProbe | indent 10 }}
-        {{- end }}
-        {{- end }}
-        resources:
-{{ toYaml .Values.resources | indent 10 }}
-    {{- if .Values.nodeSelector }}
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image }}
+          {{- if .Values.env }}
+          env:
+          {{- range $key, $val := .Values.env }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.envSecretRef }}
+          envFrom:
+          - secretRef:
+              name: {{ .Values.envSecretRef }}
+          {{- end }}
+          ports:
+          - containerPort: {{ .Values.service.internalPort }}
+          livenessProbe:
+{{ toYaml .Values.livenessProbe | indent 12 }}
+          readinessProbe:
+{{ toYaml .Values.readinessProbe | indent 12 }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
     {{- end }}
