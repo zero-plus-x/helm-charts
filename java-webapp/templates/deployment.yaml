@@ -24,7 +24,7 @@ spec:
         chart: {{ template "java-webapp.chart" . }}
         release: {{ .Release.Name }}
         heritage: {{ .Release.Service }}
-{{- with .Values.podAnnotations }}
+{{- with .Values.annotations }}
       annotations:
 {{ toYaml . | indent 8 }}
 {{- end }}

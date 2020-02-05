@@ -2,6 +2,10 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into the template.
 
+## Override the chart name
+##
+nameOverride: ""
+
 ## Number of pods to run concurrently in the replica set
 ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#replicas
 ##
@@ -18,6 +22,8 @@ service:
   type: ClusterIP
   externalPort: 80
   internalPort: 8080
+  labels: {}
+  annotations: {}
 
 ## Ingress for Services
 ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
@@ -49,7 +55,7 @@ env: {}
 ## Define envs from secret
 ## ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#configure-all-key-value-pairs-in-a-secret-as-container-environment-variables
 ##
-#envSecretRef: secretRef
+envSecretRef: "" # set to name of secret
 
 ## Strategy used to replace old Pods by new ones
 ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy

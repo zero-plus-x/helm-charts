@@ -1,24 +1,46 @@
-pipeline:
-  build:
-    image: zeroplusx/kube-workspace:latest
-    pull: true
-    commands:
-    - for d in */ ; do (helm lint --strict $d) || exit 1; done || exit 1 # Fail early, before packaging, if linting fails
-    - for d in */ ; do (helm package --save=false $d) || exit 1; done || exit 1
-    - curl -#SLo index_latest.yaml http://charts.0x.se/index.yaml
-    - helm repo index . --merge index_latest.yaml --url http://charts.0x.se
-    - mkdir repo && mv index.yaml repo/ && mv *.tgz repo/
+---
+kind: pipeline
+type: kubernetes
+name: default
 
-  deploy:
-    image: google/cloud-sdk:alpine
-    pull: true
-    when:
-      event: push
-      branch: master
-    secrets: [ service_account ]
-    commands:
-    - echo $SERVICE_ACCOUNT > gcloud-service-key.json
-    - gcloud auth activate-service-account --key-file gcloud-service-key.json # auth with gcloud
-    - gcloud config set project zero-plus-x
-    - gsutil -m rsync -R repo/ gs://charts.0x.se # deploy changes
-    - gsutil -m setmeta -r -h "Cache-Control:public, max-age=60" gs://charts.0x.se/* # set cache
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  pull: always
+  image: zeroplusx/kube-workspace:latest
+  commands:
+  - for d in */ ; do (helm lint --strict $d) || exit 1; done || exit 1
+  - for d in */ ; do (helm package --save=false $d) || exit 1; done || exit 1
+  - curl -#SLo index_latest.yaml http://charts.0x.se/index.yaml
+  - helm repo index . --merge index_latest.yaml --url http://charts.0x.se
+  - mkdir repo && mv index.yaml repo/ && mv *.tgz repo/
+
+- name: release
+  pull: always
+  image: google/cloud-sdk:alpine
+  commands:
+  - echo $GCLOUD_KEY > /tmp/gcloud-service-key.json
+  - gcloud auth activate-service-account --key-file /tmp/gcloud-service-key.json --quiet
+  - gcloud config set project zero-plus-x
+  - gsutil -m rsync -R repo/ gs://charts.0x.se
+  - gsutil -m setmeta -r -h "Cache-Control:public, max-age=60" gs://charts.0x.se/*
+  environment:
+    GCLOUD_KEY:
+      from_secret: gcloud_key
+  when:
+    branch:
+    - master
+    event:
+    - push
+
+trigger:
+  branch:
+  - master
+  event:
+  - pull_request
+  - push
+
+...
