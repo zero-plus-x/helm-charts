@@ -57,6 +57,11 @@ env: {}
 ##
 envSecretRef: "" # set to name of secret
 
+## Secret files
+## ref: https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets-as-files-from-a-pod
+##
+secretFileRefs: []
+
 ## Strategy used to replace old Pods by new ones
 ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
 ##

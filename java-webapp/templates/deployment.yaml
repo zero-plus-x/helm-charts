@@ -44,6 +44,14 @@ spec:
           - secretRef:
               name: {{ .Values.envSecretRef }}
           {{- end }}
+        {{- if .Values.secretFileRefs }}
+          volumeMounts:
+          {{- range $secret := .Values.secretFileRefs }}
+          - name: {{ $secret }}
+            mountPath: "/etc/secrets"
+            readOnly: true
+          {{- end -}}
+        {{- end }}
           ports:
           - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
@@ -52,6 +60,14 @@ spec:
 {{ toYaml .Values.readinessProbe | indent 12 }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+    {{- if .Values.secretFileRefs }}
+      volumes:
+      {{- range $secret := .Values.secretFileRefs }}
+      - name: {{ $secret }}
+        secret:
+          secretName: {{ $secret }}
+      {{- end -}}
+    {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
