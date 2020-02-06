@@ -1,4 +1,4 @@
-# Default values for Reporter API
+# Default values for java-webapp
 # This is a YAML-formatted file.
 # Declare variables to be passed into the template.
 
@@ -11,9 +11,9 @@ nameOverride: ""
 ##
 replicas: 1
 
-## Reporter API Docker image
+## Java Docker image
 ##
-image: gcr.io/zero-plus-x/reporter-api:latest
+image: <repo/org/image:tag>
 
 ## Service
 ## ref: https://kubernetes.io/docs/concepts/services-networking/service/
@@ -30,22 +30,17 @@ service:
 ##
 ingress:
   enabled: false
-  # Used to create an Ingress record.
-  hosts: []
-  #hosts:
-  #  - reporter-api-staging.0x.se
+  hosts:
+  - chart-example.local
   labels: {}
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    cert-manager.io/acme-challenge-type: dns01
-    cert-manager.io/acme-dns01-provider: clouddns
-    cert-manager.io/cluster-issuer: letsencrypt-staging
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx # or e.g. traefik
+    # kubernetes.io/tls-acme: "true"
   tls: []
-  #tls:
-  #  - secretName: reporter-api-staging
-  #    hosts:
-  #      - reporter-api-staging.0x.se
-
+    # Secrets must be manually created in the namespace.
+    # - secretName: chart-example-tls
+    #   hosts:
+    #     - chart-example.local
 
 ## Define envs
 ## ref: https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/
