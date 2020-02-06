@@ -31,8 +31,6 @@ steps:
     GCLOUD_KEY:
       from_secret: gcloud_key
   when:
-    branch:
-    - master
     event:
     - push
 
