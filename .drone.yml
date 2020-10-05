@@ -13,7 +13,7 @@ steps:
   image: zeroplusx/kube-workspace:latest
   commands:
   - for d in */ ; do (helm lint --strict $d) || exit 1; done || exit 1
-  - for d in */ ; do (helm package --save=false $d) || exit 1; done || exit 1
+  - for d in */ ; do (helm package $d) || exit 1; done || exit 1
   - curl -#SLo index_latest.yaml http://charts.0x.se/index.yaml
   - helm repo index . --merge index_latest.yaml --url http://charts.0x.se
   - mkdir repo && mv index.yaml repo/ && mv *.tgz repo/
